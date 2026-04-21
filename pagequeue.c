@@ -1,7 +1,7 @@
 /** pagequeue.c
  * ===========================================================
- * Name: _______________________, __ ___ 2026
- * Section: CS483 / ____
+ * Name: Logan Johns, 15 April 2026
+ * Section: CS483 / M4
  * Project: PEX3 - Page Replacement Simulator
  * Purpose: Implementation of the PageQueue ADT — a doubly-linked
  *          list for LRU page replacement.
@@ -18,7 +18,12 @@
 PageQueue *pqInit(unsigned int maxSize) {
     // TODO: malloc a PageQueue, set head and tail to NULL,
     //       size to 0, maxSize to maxSize, and return the pointer
-    return NULL;
+    PageQueue *p = (PageQueue*) malloc(sizeof(PageQueue*));
+    p->head = NULL;
+    p->tail = NULL;
+    p->size = 0;
+    p->maxSize = maxSize;
+    return p;
 }
 
 /**
@@ -37,6 +42,37 @@ long pqAccess(PageQueue *pq, unsigned long pageNum) {
     //   - Allocate a new node for pageNum and insert it at the tail.
     //   - If size now exceeds maxSize, evict the head node (free it).
     //   - Return -1.
+    PqNode *node = pq->tail;
+    for (int d=0; d<pq->size; d++) {
+        //check for hit
+        if (node->pageNum == pageNum) {
+            //hit
+            if (node->next != NULL) { //check that node is not already the tail
+                if (node->prev == NULL) { //check if the node to be moved is the head
+                    pq->head = node->next; //update pq->head for new head node
+                }
+                node->next->prev = node->prev;
+                node->prev->next = node->next;
+                node->prev = pq->tail;
+                pq->tail->next = node;
+                pq->tail = node;
+            }
+            return d;
+        }
+        node = node->prev;
+    }
+    //node not found. Add new node to tail of list.
+    PqNode *newNode = (PqNode*) malloc(sizeof(PqNode*));
+    newNode->pageNum = pageNum;
+    newNode->next = NULL;
+    newNode->prev = pq->tail;
+    pq->size += 1;
+    if (pq->size > pq->maxSize) { //queue now too big. Remove head node.
+        pq->head = pq->head->next;
+        free(pq->head->prev);
+        pq->size -= 1;
+    }
+
     return -1;
 }
 
@@ -46,6 +82,13 @@ long pqAccess(PageQueue *pq, unsigned long pageNum) {
 void pqFree(PageQueue *pq) {
     // TODO: Walk from head to tail, free each node, then free
     //       the PageQueue struct itself.
+    PqNode *node = pq->head;
+    for (int i=0; i<pq->size-1; i++) {
+        node = node->next;
+        free(node->prev);
+    }
+    free(node); //final node not freed in for loop
+    free(pq);
 }
 
 /**
