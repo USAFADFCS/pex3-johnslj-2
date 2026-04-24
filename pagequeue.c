@@ -1,6 +1,6 @@
 /** pagequeue.c
  * ===========================================================
- * Name: Logan Johns, 15 April 2026
+ * Name: Logan Johns, 23 April 2026
  * Section: CS483 / M4
  * Project: PEX3 - Page Replacement Simulator
  * Purpose: Implementation of the PageQueue ADT — a doubly-linked
@@ -47,31 +47,45 @@ long pqAccess(PageQueue *pq, unsigned long pageNum) {
         //check for hit
         if (node->pageNum == pageNum) {
             //hit
-            if (node->next != NULL) { //check that node is not already the tail
-                if (node->prev == NULL) { //check if the node to be moved is the head
+            if (pq->tail->pageNum != pageNum) { //check that node is not already the tail
+                if (pq->head->pageNum == pageNum) { //check if the node to be moved is the head
                     pq->head = node->next; //update pq->head for new head node
+                    pq->head->prev = NULL;
+
+                } else {
+                    node->next->prev = node->prev;
+                    node->prev->next = node->next;
+                    node->prev = pq->tail;
                 }
-                node->next->prev = node->prev;
-                node->prev->next = node->next;
+                node->next = NULL;
                 node->prev = pq->tail;
                 pq->tail->next = node;
                 pq->tail = node;
             }
             return d;
         }
-        node = node->prev;
+        if (d<pq->size-1) { //ensure that we are not accessing the one before the head
+            node = node->prev;
+        }
     }
     //node not found. Add new node to tail of list.
     PqNode *newNode = (PqNode*) malloc(sizeof(PqNode*));
     newNode->pageNum = pageNum;
     newNode->next = NULL;
-    newNode->prev = pq->tail;
-    pq->size += 1;
+    if (pq->size==0) { //nothing in queue. New node is head and tail.
+        pq->head = newNode;
+        newNode->prev = NULL;
+    } else {
+        newNode->prev = pq->tail;
+        newNode->prev->next = newNode;
+    }
+    pq->size++;
     if (pq->size > pq->maxSize) { //queue now too big. Remove head node.
         pq->head = pq->head->next;
         free(pq->head->prev);
-        pq->size -= 1;
+        pq->size--;
     }
+    pq->tail = newNode;
 
     return -1;
 }
@@ -82,12 +96,13 @@ long pqAccess(PageQueue *pq, unsigned long pageNum) {
 void pqFree(PageQueue *pq) {
     // TODO: Walk from head to tail, free each node, then free
     //       the PageQueue struct itself.
-    PqNode *node = pq->head;
-    for (int i=0; i<pq->size-1; i++) {
-        node = node->next;
-        free(node->prev);
+    for (int i=pq->size; i>0; i--) {
+        PqNode* nodePtr = pq->tail;
+        PqNode* prevNode = nodePtr->prev;
+        pq->tail = prevNode;
+        pq->size--;
+        free(nodePtr);
     }
-    free(node); //final node not freed in for loop
     free(pq);
 }
 
@@ -98,4 +113,11 @@ void pqPrint(PageQueue *pq) {
     // TODO (optional): Print each page number from head to tail,
     //                  marking which is head and which is tail.
     //                  Useful for desk-checking small traces.
+    PqNode* nodePtr = pq->head;
+    printf("HEAD -> ");
+    for (int i=0; i<pq->size; i++) {
+        printf("%ld ",nodePtr->pageNum);
+        nodePtr = nodePtr->next;
+    }
+    printf("<- TAIL\n");
 }

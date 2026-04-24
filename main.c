@@ -1,12 +1,12 @@
 /** main.c
  * ===========================================================
- * Name: Logan Johns, 15 Apr 2026
+ * Name: Logan Johns, 23 Apr 2026
  * Section: CS483 / M4
  * Project: PEX3 - Page Replacement Simulator
  * Purpose: Reads a BYU binary memory trace file and simulates
  *          LRU page replacement to measure fault rates across
  *          varying frame allocations.
- * Documentation: TBD
+ * Documentation: None
  * =========================================================== */
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     //       total number of page faults that occur when f frames are
     //       available.  Use calloc so all entries start at zero.
     PageQueue *pq = pqInit(maxFrames);
-    long *faults = (long*) calloc(maxFrames,sizeof(long*));
+    long *faults = (long*) calloc(maxFrames+1,sizeof(long*));
 
     // Process each memory access from the trace file
     while (!feof(ifp)) {
